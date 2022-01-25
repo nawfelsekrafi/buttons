@@ -1,0 +1,10 @@
+<mat-toolbar color="secondary">
+  <a routerLink="/" >Alacarte</a>
+  <span class="spacer"></span>
+  <button *ngIf="!isAuthenticated()" mat-flat-button (click)="onClickLogin()">
+    Giriş Yapın Material Button
+  </button>
+
+  <button class="py-2 px-3 m-2 bg-white hover:bg-nav-hover-blue rounded-md text-black">Giris Yapın Tailwind Button</button>
+
+</mat-toolbar>

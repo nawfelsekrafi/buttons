@@ -1,0 +1,16 @@
+<div class="login-page">
+  <mat-card>
+    <h1>Giriş</h1>
+    <form [formGroup]="loginFormGroup" (submit)="onSubmit()">
+      <mat-form-field color="primary">
+        <mat-label>Kullanıcı</mat-label>
+        <input type="text" matInput required formControlName="user" />
+      </mat-form-field>
+      <mat-form-field color="primary">
+        <mat-label>Şifre</mat-label>
+        <input matInput required formControlName="password" />
+      </mat-form-field>
+      <button mat-flat-button type="submit" color="primary">Giriş Yap</button>
+    </form>
+  </mat-card>
+</div>

@@ -1,0 +1,59 @@
+name: Build PR
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+jobs:
+  build-pr:
+    if: github.event.pull_request.merged == false
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.5.0
+        with:
+          access_token: ${{ github.token }}
+
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          always-auth: true
+          node-version: ${{ matrix.node-version }}
+
+      - name: Create new version
+        run: |
+          SHA1=${{ github.event.pull_request.head.sha }}
+          BRANCH=${{ github.event.pull_request.head.ref }}
+          VERSION=1.0.0-${BRANCH}-${SHA1:0:7}
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Commit version
+        run: |
+          npm version --no-git-tag-version $APP_VERSION
+
+      - name: Install environment
+        run: npm ci
+
+      - name: Build
+        run: npm run build:ssr
+
+      - name: Deploying
+        env:
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_PASS: ${{ secrets.DOCKER_PASS }}
+        run: |
+          docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+          SHA1=${{ github.event.pull_request.head.sha }}
+          image_name=${DOCKER_USER}/alacarte-web-app
+          docker build -t ${image_name}:${SHA1:0:7} --build-arg NPM_TOKEN=${NPM_TOKEN} .
+          docker tag ${image_name}:${SHA1:0:7} ${image_name}:latest
+          docker push --all-tags ${image_name}
+          wait
